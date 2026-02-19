@@ -8,7 +8,6 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import AppNavbar from './components/AppNavbar';
 import Header from './components/Header';
-import MainGrid from './components/MainGrid';
 import SideMenu from './components/SideMenu';
 import AppTheme from '../shared-theme/AppTheme';
 import {
@@ -17,6 +16,10 @@ import {
   treeViewCustomizations,
 } from './theme/customizations';
 import RoomsGrid from '../../features/rooms/RoomsGrid';
+import IconButton from '@mui/material/IconButton';
+import LogoutIcon from '@mui/icons-material/Logout';
+import Tooltip from '@mui/material/Tooltip';
+import { useLogout } from '../../features/auth/useLogout';
 
 const xThemeComponents = {
   ...chartsCustomizations,
@@ -25,6 +28,8 @@ const xThemeComponents = {
 };
 
 export default function Dashboard(props: { disableCustomTheme?: boolean }) {
+  const logout = useLogout();
+
   return (
     <AppTheme {...props} themeComponents={xThemeComponents}>
       <CssBaseline enableColorScheme />
@@ -55,6 +60,12 @@ export default function Dashboard(props: { disableCustomTheme?: boolean }) {
             <RoomsGrid />
           </Stack>
         </Box>
+        <Tooltip title="Cerrar sesión">
+          <IconButton color="inherit" onClick={logout}>
+            <LogoutIcon />
+          </IconButton>
+        </Tooltip>
+
       </Box>
     </AppTheme>
   );

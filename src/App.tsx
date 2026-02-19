@@ -3,6 +3,7 @@ import Dashboard from './template/dashboard/Dashboard';
 import SignIn from './features/auth/SignIn';
 import RequireAuth from './features/auth/RequireAuth';
 import { getSession } from './features/auth/auth.store';
+import TicketPrintPage from './features/ticket/TicketPrintPage';
 
 export default function App() {
   const session = getSession();
@@ -35,7 +36,15 @@ export default function App() {
             )
           }
         />
-
+        {/* Página de impresión de tickets */}
+        <Route
+          path="/print/:folio"
+          element={
+            <RequireAuth>
+              <TicketPrintPage />
+            </RequireAuth>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

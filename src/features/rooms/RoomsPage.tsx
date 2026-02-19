@@ -58,10 +58,14 @@ export default function RoomsPage() {
       const raw = draftCosts[roomId] ?? '';
       const newCost = Number(raw);
 
-      const updated = await updateRoomCost(roomId, newCost);
+      await updateRoomCost(roomId, newCost);
 
-      setRooms(prev => prev.map(r => (r.id === roomId ? updated : r)));
-      setDraftCosts(prev => ({ ...prev, [roomId]: String(updated.cost) }));
+      setRooms(prev =>
+        prev.map(r => (r.id === roomId ? { ...r, cost: newCost } : r))
+      );
+
+      setDraftCosts(prev => ({ ...prev, [roomId]: String(newCost) }));
+
     } catch (e: any) {
       setError(e?.message ?? 'Error guardando costo.');
     } finally {
