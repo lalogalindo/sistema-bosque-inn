@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import MuiSignIn from '../../template/sign-in/SignIn';
+// import MuiSignIn from '../../template/sign-in/SignIn';
+import CustomSignIn from '../signin/SignIn';
 import { signIn } from './auth.service';
 import { setSession } from './auth.store';
 
@@ -14,5 +15,6 @@ export default function SignIn() {
     navigate(redirectTo, { replace: true });
   }
 
-  return <MuiSignIn onSubmit={handleLogin} />;
+  // return <MuiSignIn onSubmit={handleLogin} />;
+  return <CustomSignIn onSubmit={handleLogin} />;
 }
