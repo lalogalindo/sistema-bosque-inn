@@ -79,3 +79,17 @@ button:focus-visible {
   .no-print { display: none !important; }
   .ticket { border: none; width: 80mm; }
 }
+/* Full-width mode (only when enabled via body class) */
+body.fullwidth-root {
+  display: block;       /* disable the flex centering */
+  place-items: initial; /* not needed anymore, but safe */
+}
+
+/* Remove the root clamp only in full-width mode */
+body.fullwidth-root #root {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  text-align: initial;
+  width: 100%;
+}

@@ -6,6 +6,9 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import Divider from '@mui/material/Divider';
 
+import Logo from '../../assets/images/logo.png';
+import QR from '../../assets/images/QR.jpg';
+
 import {
   getTicketByFolio,
   getExtrasForFolio,
@@ -30,8 +33,11 @@ export default function TicketPrintPage() {
         const e = await getExtrasForFolio(folio);
         setTicket(t);
         setExtras(e);
-      } catch (err: any) {
-        setError(err?.message ?? 'No se pudo cargar el ticket');
+      } catch (err: unknown) {
+        setError(err instanceof Error 
+          ? err.message
+          : 'No se pudo cargar el ticket'
+        );
       } finally {
         setLoading(false);
       }
@@ -65,7 +71,17 @@ export default function TicketPrintPage() {
       </Box>
 
       <div className="ticket">
-        <h2 style={{ margin: 0 }}>BOSQUE INN</h2>
+        <Box 
+          component='img' 
+          src={Logo}
+          sx={{
+            filter: "grayscale(100%)",
+            maxWidth: '40mm',
+            display: 'block',
+            m: 'auto'
+          }} 
+        />
+        <h2 style={{ margin: 0, textAlign: 'center' }}>BOSQUE INN</h2>
         <div>Ticket de renta</div>
         <Divider sx={{ my: 1 }} />
 
@@ -123,6 +139,28 @@ export default function TicketPrintPage() {
         <div><strong>“Si no recibes tu ticket, la habitación es gratis.”</strong></div>
         <div style={{ fontSize: 12, opacity: 0.85, marginTop: 8 }}>
           Reimpresión válida con el mismo folio.
+        </div>
+
+        <Divider sx={{ my: 1 }} />
+
+        <div style={{ fontSize: 11, textAlign: 'center', lineHeight: 1.3, marginTop: 4, marginBottom: 4 }}>
+          Si requiere factura, solicitarla vía WhatsApp al 246 111 2566 o escaneando el QR.
+        </div>
+
+        <Box 
+          component='img' 
+          src={QR}
+          sx={{
+            filter: "grayscale(100%)",
+            maxWidth: '50mm',
+            display: 'block',
+            m: 'auto'
+          }} 
+        />
+
+        <Divider sx={{ my: 1 }} />
+        <div style={{ fontSize: 10, textAlign: 'center', lineHeight: 1.3, marginTop: 4, marginBottom: 4 }}>
+          El precio incluye IVA e impuestos sobre hospedaje.
         </div>
       </div>
     </Box>

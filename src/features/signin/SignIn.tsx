@@ -1,23 +1,17 @@
 import * as React from 'react';
+import { useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
 import CssBaseline from '@mui/material/CssBaseline';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Divider from '@mui/material/Divider';
 import FormLabel from '@mui/material/FormLabel';
 import FormControl from '@mui/material/FormControl';
-import Link from '@mui/material/Link';
 import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
 
-import ForgotPassword from '../../template/sign-in/components/ForgotPassword'
+import ForgotPassword from '../../template/sign-in/components/ForgotPassword';
 import AppTheme from '../../template/shared-theme/AppTheme';
-import ColorModeSelect from '../../template/shared-theme/ColorModeSelect';
-import { GoogleIcon, FacebookIcon, SitemarkIcon } from '../../template/sign-in/components/CustomIcons';
 
 import Logo from '../../assets/images/logo.png';
 
@@ -65,42 +59,41 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
 
 export type SignInProps = {
   disableCustomTheme?: boolean;
-  onSubmit: (email: string, password: string) => Promise<void>;
+  onSubmit: (username: string, password: string) => Promise<void>;
 };
 
 export default function SignIn(props: SignInProps) {
   const { onSubmit } = props;
 
-  const [emailError, setEmailError] = React.useState(false);
-  const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
+  const [usernameError, setUsernameError] = React.useState(false);
+  const [usernameErrorMessage, setUsernameErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
   const [open, setOpen] = React.useState(false);
 
-  const handleClickOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
   const validateInputs = () => {
-    const email = document.getElementById('email') as HTMLInputElement | null;
+    const username = document.getElementById('user') as HTMLInputElement | null;
     const password = document.getElementById('password') as HTMLInputElement | null;
 
     let isValid = true;
 
-    const emailValue = email?.value ?? '';
+    const usernameValue = username?.value.trim() ?? '';
     const passwordValue = password?.value ?? '';
 
-    if (!emailValue || !/\S+@\S+\.\S+/.test(emailValue)) {
-      setEmailError(true);
-      setEmailErrorMessage('Please enter a valid email address.');
+    if (!usernameValue) {
+      setUsernameError(true);
+      setUsernameErrorMessage('Ingresa un usuario.');
       isValid = false;
     } else {
-      setEmailError(false);
-      setEmailErrorMessage('');
+      setUsernameError(false);
+      setUsernameErrorMessage('');
     }
 
     if (!passwordValue || passwordValue.length < 6) {
       setPasswordError(true);
-      setPasswordErrorMessage('Password must be at least 6 characters long.');
+      setPasswordErrorMessage('La contraseña debe tener al menos 6 caracteres.');
       isValid = false;
     } else {
       setPasswordError(false);
@@ -119,26 +112,40 @@ export default function SignIn(props: SignInProps) {
     const form = event.currentTarget as HTMLFormElement;
     const data = new FormData(form);
 
-    const email = String(data.get('email') ?? '').trim();
+    const username = String(data.get('user') ?? '').trim();
     const password = String(data.get('password') ?? '');
 
-    await onSubmit(email, password);
+    try {
+      await onSubmit(username, password);
+    } catch (err: unknown) {
+      setPasswordError(true);
+      setPasswordErrorMessage('Credenciales incorrectas');
+      console.warn(`Error -> ${err instanceof Error ? err.message : err}`);
+    }
   };
+
+  useEffect(() => {
+    document.body.classList.add('fullwidth-root');
+    return () => {
+      document.body.classList.remove('fullwidth-root');
+    };
+  }, []);
 
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
-      <SignInContainer direction="column" justifyContent="space-between">
-        <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} />
+      <SignInContainer justifyContent="center" alignContent="center">
+        {/* <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} /> */}
         <Card variant="outlined">
-          <img src={Logo} alt="Logo" />
-          <Typography
-            component="h1"
-            variant="h4"
-            sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}
-          >
-            Sign in
-          </Typography>
+          <Box
+            component="img"
+            src={Logo}
+            alt="Logo"
+            sx={{
+              width: 150,
+              m: '0 auto',
+            }}
+          />
 
           <Box
             component="form"
@@ -152,20 +159,19 @@ export default function SignIn(props: SignInProps) {
             }}
           >
             <FormControl>
-              <FormLabel htmlFor="email">Email</FormLabel>
+              <FormLabel htmlFor="user">Usuario</FormLabel>
               <TextField
-                error={emailError}
-                helperText={emailErrorMessage}
-                id="email"
-                type="email"
-                name="email"
-                placeholder="your@email.com"
-                autoComplete="email"
+                error={usernameError}
+                helperText={usernameErrorMessage}
+                id="user"
+                type="text"
+                name="user"
+                placeholder="usuario"
                 autoFocus
                 required
                 fullWidth
                 variant="outlined"
-                color={emailError ? 'error' : 'primary'}
+                color={usernameError ? 'error' : 'primary'}
               />
             </FormControl>
 
@@ -186,59 +192,11 @@ export default function SignIn(props: SignInProps) {
               />
             </FormControl>
 
-            <FormControlLabel
-              control={<Checkbox value="remember" color="primary" />}
-              label="Remember me"
-            />
-
             <ForgotPassword open={open} handleClose={handleClose} />
 
             <Button type="submit" fullWidth variant="contained">
-              Sign in
+              Ingresar
             </Button>
-
-            <Link
-              component="button"
-              type="button"
-              onClick={handleClickOpen}
-              variant="body2"
-              sx={{ alignSelf: 'center' }}
-            >
-              Forgot your password?
-            </Link>
-          </Box>
-
-          <Divider>or</Divider>
-
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={() => alert('Sign in with Google')}
-              startIcon={<GoogleIcon />}
-            >
-              Sign in with Google
-            </Button>
-
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={() => alert('Sign in with Facebook')}
-              startIcon={<FacebookIcon />}
-            >
-              Sign in with Facebook
-            </Button>
-
-            <Typography sx={{ textAlign: 'center' }}>
-              Don&apos;t have an account?{' '}
-              <Link
-                href="/material-ui/getting-started/templates/sign-in/"
-                variant="body2"
-                sx={{ alignSelf: 'center' }}
-              >
-                Sign up
-              </Link>
-            </Typography>
           </Box>
         </Card>
       </SignInContainer>
