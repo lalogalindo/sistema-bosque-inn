@@ -3,6 +3,7 @@ services:
   - type: web
     name: bosque-inn-api
     env: node
+    plan: free # <--- Explicitly use the free tier
     rootDir: server
     buildCommand: npm install && npm run build
     startCommand: npm start
