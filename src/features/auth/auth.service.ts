@@ -9,6 +9,7 @@ export async function signIn(username: string, password: string): Promise<Sessio
     });
 
     return {
+      id: user.id,
       username: user.username,
       role: user.role,
       name: user.username, // Podríamos pedir el nombre real si lo agregamos a la tabla
@@ -16,8 +17,4 @@ export async function signIn(username: string, password: string): Promise<Sessio
   } catch (error: any) {
     throw new Error(error.message || 'Error al iniciar sesión');
   }
-}
-
-function wait(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
 }

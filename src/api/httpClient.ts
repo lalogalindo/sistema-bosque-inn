@@ -20,7 +20,21 @@ async function request<T>(method: HttpMethod, path: string, body?: unknown): Pro
     headers: { 'Content-Type': 'application/json' },
   };
 
-  if (body !== undefined) init.body = JSON.stringify(body);
+  if (body !== undefined) {
+    // Si hay una sesión activa, inyectamos el userId en el cuerpo de la petición
+    // para que el servidor sepa quién hizo el cambio.
+    const sessionRaw = localStorage.getItem('hotel_session_v1');
+    let enrichedBody = body;
+    if (sessionRaw && typeof body === 'object' && body !== null) {
+        try {
+            const session = JSON.parse(sessionRaw);
+            if (session.id) {
+                enrichedBody = { ...body, userId: session.id };
+            }
+        } catch {}
+    }
+    init.body = JSON.stringify(enrichedBody);
+  }
 
   const res = opts.useMock ? await mockFetch(url, init) : await fetch(url, init);
 

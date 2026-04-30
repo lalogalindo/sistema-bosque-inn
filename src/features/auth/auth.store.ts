@@ -1,6 +1,7 @@
 export type Role = 'ADMIN' | 'STAFF';
 
 export type Session = {
+  id: string;
   username: string;
   role: Role;
   name: string;

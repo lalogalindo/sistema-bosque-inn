@@ -10,34 +10,37 @@ import Stack from '@mui/material/Stack';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import AnalyticsRoundedIcon from '@mui/icons-material/AnalyticsRounded';
 import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
-import AssignmentRoundedIcon from '@mui/icons-material/AssignmentRounded';
+
 import LogoutIcon from '@mui/icons-material/Logout';
 
 import { useLogout } from '../auth/useLogout';
+import { getCurrentUser } from '../auth/auth.store';
 
 type MenuItem = {
   text: string;
   to: string;
   icon: React.ReactNode;
-  // si luego quieres controlar por rol:
-  // roles?: Array<'ADMIN' | 'STAFF'>;
+  adminOnly: boolean;
 };
 
 const mainListItems: MenuItem[] = [
-  { text: 'Home', to: '/', icon: <HomeRoundedIcon /> },
-  { text: 'Analytics', to: '/reports', icon: <AnalyticsRoundedIcon /> },
-  { text: 'Clients', to: '/clients', icon: <PeopleRoundedIcon /> },
-  { text: 'Tasks', to: '/tasks', icon: <AssignmentRoundedIcon /> },
+  { text: 'Habitaciones', to: '/', icon: <HomeRoundedIcon />, adminOnly: false },
+  { text: 'Corte de Caja', to: '/reports', icon: <AnalyticsRoundedIcon />, adminOnly: true },
+  { text: 'Usuarios', to: '/users', icon: <PeopleRoundedIcon />, adminOnly: true },
 ];
 
 export default function MenuContent() {
   const logout = useLogout();
   const { pathname } = useLocation();
+  const user = getCurrentUser();
+  const isAdmin = user?.role?.toUpperCase() === 'ADMIN';
+
+  const visibleItems = mainListItems.filter(item => !item.adminOnly || isAdmin);
 
   return (
     <Stack sx={{ flexGrow: 1, p: 1, justifyContent: 'space-between' }}>
       <List dense>
-        {mainListItems.map((item) => {
+        {visibleItems.map((item) => {
           const selected = pathname === item.to || (item.to !== '/' && pathname.startsWith(item.to));
 
           return (

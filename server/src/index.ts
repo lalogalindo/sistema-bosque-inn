@@ -143,7 +143,8 @@ app.patch('/api/rooms/:id/status', async (req: Request, res: Response) => {
     type: 'STATUS_CHANGE',
     from_status: room.status,
     to_status: status,
-    at: new Date().toISOString()
+    at: new Date().toISOString(),
+    created_by_user: req.body.userId // <--- Se agrega el usuario
   });
 
   res.json({ ok: true });
@@ -174,7 +175,8 @@ app.post('/api/tickets', async (req: Request, res: Response) => {
     base_cost: baseCost,
     time_extra_cost: 0,
     extras_cost: 0,
-    total_cost: baseCost
+    total_cost: baseCost,
+    created_by_user: req.body.userId // <--- Se agrega el usuario
   }).select().single();
 
   if (sErr) return res.status(500).json({ message: sErr.message });
@@ -191,7 +193,8 @@ app.post('/api/tickets', async (req: Request, res: Response) => {
     time_extra_cost: 0,
     extras_cost: 0,
     total_cost: baseCost,
-    status_at_issue: 'OCUPADA'
+    status_at_issue: 'OCUPADA',
+    created_by_user: req.body.userId // <--- Se agrega el usuario
   }).select().single();
 
   if (tErr) return res.status(500).json({ message: tErr.message });
@@ -338,7 +341,8 @@ app.post('/api/rooms/:id/sales', async (req: Request, res: Response) => {
         name: description,
         qty: 1,
         unit_price: total,
-        total: total
+        total: total,
+        created_by_user: req.body.userId // <--- Se agrega el usuario
     }).select().single();
 
     const newExtrasCost = roundMoney(session.extras_cost + total);
@@ -429,27 +433,31 @@ app.patch('/api/admin/users/:id', async (req: Request, res: Response) => {
     res.json({ ok: true });
 });
 
-// -------- ADMIN: REPORTS (CORTE DE CAJA) --------
-app.get('/api/admin/reports/revenue', async (req: Request, res: Response) => {
-    const { from, to } = req.query;
+app.delete('/api/admin/users/:id', async (req: Request, res: Response) => {
+    const { id } = req.params;
+    // user_schedules se borran en cascada (ON DELETE CASCADE)
+    const { error } = await supabase.from('users').delete().eq('id', id);
+    if (error) return res.status(500).json({ message: error.message });
+    res.json({ ok: true });
+});
 
-    // Get all tickets in period
-    let q = supabase.from('tickets').select('total_cost, created_by_user, users(username)');
+// -------- ADMIN: REPORTS (CORTE DE CAJA) --------
+app.get('/api/admin/reports/details', async (req: Request, res: Response) => {
+    const { from, to, roomId } = req.query;
+
+    // Get tickets with full detail
+    let q = supabase.from('tickets').select('*').order('created_at', { ascending: false });
     if (from) q = q.gte('created_at', from);
     if (to) q = q.lte('created_at', to);
+    if (roomId) q = q.eq('room_id', roomId);
 
-    const { data, error } = await q;
+    const { data: tickets, error } = await q;
     if (error) return res.status(500).json({ message: error.message });
 
-    // Group by user
-    const totals: Record<string, any> = {};
-    data.forEach((t: any) => {
-        const username = t.users?.username || 'Sistema/Manual';
-        if (!totals[username]) totals[username] = 0;
-        totals[username] += Number(t.total_cost);
-    });
+    // Get current rooms status for the live snapshot
+    const { data: rooms } = await supabase.from('rooms').select('id, number, status');
 
-    res.json(totals);
+    res.json({ tickets: tickets || [], rooms: rooms || [] });
 });
 
 app.listen(port, () => {

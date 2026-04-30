@@ -6,6 +6,7 @@ import { alpha } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
+import { Outlet } from 'react-router-dom';
 import AppNavbar from '../sidebar/AppNavbar';
 import Header from '../../template/dashboard/components/Header';
 import SideMenu from '../sidebar/SideMenu';
@@ -15,7 +16,6 @@ import {
   datePickersCustomizations,
   treeViewCustomizations,
 } from '../../template/dashboard/theme/customizations';
-import RoomsGrid from '../../features/rooms/RoomsGrid';
 
 const xThemeComponents = {
   ...chartsCustomizations,
@@ -24,7 +24,6 @@ const xThemeComponents = {
 };
 
 export default function Dashboard(props: { disableCustomTheme?: boolean }) {
-
   return (
     <AppTheme {...props} themeComponents={xThemeComponents}>
       <CssBaseline enableColorScheme />
@@ -52,7 +51,7 @@ export default function Dashboard(props: { disableCustomTheme?: boolean }) {
             }}
           >
             <Header />
-            <RoomsGrid />
+            <Outlet />
           </Stack>
         </Box>
       </Box>

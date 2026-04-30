@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
 import CssBaseline from '@mui/material/CssBaseline';
 import FormLabel from '@mui/material/FormLabel';
 import FormControl from '@mui/material/FormControl';
@@ -70,6 +71,7 @@ export default function SignIn(props: SignInProps) {
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
   const [open, setOpen] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
 
   const handleClose = () => setOpen(false);
 
@@ -116,11 +118,14 @@ export default function SignIn(props: SignInProps) {
     const password = String(data.get('password') ?? '');
 
     try {
+      setLoading(true);
       await onSubmit(username, password);
     } catch (err: unknown) {
       setPasswordError(true);
-      setPasswordErrorMessage('Credenciales incorrectas');
+      setPasswordErrorMessage(err instanceof Error ? err.message : 'Credenciales incorrectas');
       console.warn(`Error -> ${err instanceof Error ? err.message : err}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -194,8 +199,8 @@ export default function SignIn(props: SignInProps) {
 
             <ForgotPassword open={open} handleClose={handleClose} />
 
-            <Button type="submit" fullWidth variant="contained">
-              Ingresar
+            <Button type="submit" fullWidth variant="contained" disabled={loading}>
+              {loading ? <CircularProgress size={24} color="inherit" /> : 'Ingresar'}
             </Button>
           </Box>
         </Card>
