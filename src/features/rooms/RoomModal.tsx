@@ -151,8 +151,7 @@ export default function RoomModal(props: {
         photoDataUrl: vehiclePhoto,
       });
 
-      const ticket = await getActiveTicketForRoom(room.id);
-      onAfterChange(ticket?.folio ? { goToPrintFolio: ticket.folio } : undefined);
+      onAfterChange();
       onClose();
     } catch (e: any) {
       setError(e?.message ?? 'No se pudo guardar la placa/foto');
@@ -211,8 +210,7 @@ export default function RoomModal(props: {
     setLoading(true);
     try {
       await extendTimeForRoom({ roomId: room.id, minutesToAdd });
-      const ticket = await getActiveTicketForRoom(room.id);
-      onAfterChange(ticket?.folio ? { goToPrintFolio: ticket.folio } : undefined);
+      onAfterChange();
       onClose();
     } catch (e: any) {
       setError(e?.message ?? 'No se pudo agregar tiempo.');
@@ -230,8 +228,7 @@ export default function RoomModal(props: {
         description: saleDesc,
         amount: Number(saleAmount),
       });
-      const ticket = await getActiveTicketForRoom(room.id);
-      onAfterChange(ticket?.folio ? { goToPrintFolio: ticket.folio } : undefined);
+      onAfterChange();
       onClose();
     } catch (e: any) {
       setError(e?.message ?? 'No se pudo registrar la venta.');
