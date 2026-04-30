@@ -14,6 +14,15 @@ app.use(express.json());
 // Helper for rounding money
 const roundMoney = (n: number) => Math.round(n * 100) / 100;
 
+// -------- HEALTH CHECK --------
+app.get('/health', async (req: Request, res: Response) => {
+    const { data, error } = await supabase.from('rooms').select('count', { count: 'exact', head: true });
+    if (error) {
+        return res.status(500).json({ status: 'error', database: 'disconnected', error: error.message });
+    }
+    res.json({ status: 'ok', database: 'connected', rooms_count: data });
+});
+
 // -------- CONFIG --------
 app.get('/api/config', async (req: Request, res: Response) => {
   // In a real app, this might come from DB, but we can hardcode it for now
