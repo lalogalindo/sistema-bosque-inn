@@ -10,4 +10,6 @@ if (!supabaseUrl || !supabaseKey) {
   console.warn('Supabase credentials missing. Ensure SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// Ahora el cliente limpiará la URL automáticamente
+const cleanUrl = supabaseUrl.replace(/\/rest\/v1\/?$/, '');
+export const supabase = createClient(cleanUrl, supabaseKey);

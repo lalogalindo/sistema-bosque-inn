@@ -1,30 +1,21 @@
+import { http } from '../../api/httpClient';
 import type { Role, Session } from './auth.store';
 
-// MOCK local (MVP). Luego lo cambias por fetch a tu API.
-const USERS: Array<{ username: string; password: string; role: Role, name: string }> = [
-  { username: 'admin', password: '123456', role: 'ADMIN', name: 'Alejandro Galindo' },
-  { username: 'pedro', password: '234567', role: 'VENDEDOR', name: 'Pedro Reyes' },
-  { username: 'lalogalindo', password: '345678', role: 'ADMIN', name: 'Eduardo Galindo' },
-];
-
 export async function signIn(username: string, password: string): Promise<Session> {
-  await wait(200);
+  try {
+    const user = await http.post<{ id: string; username: string; role: Role }>('/api/auth/login', {
+      username,
+      password,
+    });
 
-  const user = USERS.find(
-    (u) =>
-      u.username.toLowerCase() === username.toLowerCase() &&
-      u.password === password
-  );
-
-  if (!user) {
-    throw new Error('Usuario o contraseña inválidos.');
+    return {
+      username: user.username,
+      role: user.role,
+      name: user.username, // Podríamos pedir el nombre real si lo agregamos a la tabla
+    };
+  } catch (error: any) {
+    throw new Error(error.message || 'Error al iniciar sesión');
   }
-
-  return {
-    username: user.username,
-    role: user.role,
-    name: user.name
-  };
 }
 
 function wait(ms: number) {

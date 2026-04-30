@@ -14,6 +14,63 @@ app.use(express.json());
 // Helper for rounding money
 const roundMoney = (n: number) => Math.round(n * 100) / 100;
 
+// -------- AUTH / LOGIN --------
+app.post('/api/auth/login', async (req: Request, res: Response) => {
+    const { username, password } = req.body;
+
+    const { data: user, error } = await supabase
+        .from('users')
+        .select('*, user_schedules(*)')
+        .eq('username', username)
+        .eq('password', password)
+        .single();
+
+    if (error || !user) {
+        return res.status(401).json({ message: 'Usuario o contraseña incorrectos' });
+    }
+
+    if (!user.is_active) {
+        return res.status(403).json({ message: 'Login no disponible' });
+    }
+
+    // Validar Turno si no tiene ingreso libre
+    if (!user.allow_any_time) {
+        const now = new Date();
+        const day = now.getDay(); // 0-6
+        const schedule = user.user_schedules.find((s: any) => s.day_of_week === day);
+
+        if (!schedule || !schedule.is_working) {
+            return res.status(403).json({ message: 'Login no disponible' });
+        }
+
+        const currentTime = now.getHours() * 60 + now.getMinutes();
+        const [startH, startM] = schedule.start_time.split(':').map(Number);
+        const [endH, endM] = schedule.end_time.split(':').map(Number);
+        
+        let start = startH * 60 + startM;
+        let end = endH * 60 + endM;
+
+        // Manejo de turnos que cruzan la medianoche
+        if (end < start) {
+            if (currentTime >= start || currentTime <= end) {
+                // OK
+            } else {
+                return res.status(403).json({ message: 'Login no disponible' });
+            }
+        } else {
+            if (currentTime < start || currentTime > end) {
+                return res.status(403).json({ message: 'Login no disponible' });
+            }
+        }
+    }
+
+    res.json({
+        id: user.id,
+        username: user.username,
+        role: user.role
+    });
+});
+
 // -------- HEALTH CHECK --------
 app.get('/health', async (req: Request, res: Response) => {
     const { data, error } = await supabase.from('rooms').select('count', { count: 'exact', head: true });
@@ -316,6 +373,83 @@ app.get('/api/tickets/:folio/extras', async (req: Request, res: Response) => {
     const { data, error } = await supabase.from('extra_items').select('*').eq('folio', folio);
     if (error) return res.status(500).json({ message: error.message });
     res.json(data || []);
+});
+
+// -------- ADMIN: USERS CRUD --------
+app.get('/api/admin/users', async (req: Request, res: Response) => {
+    // Note: In a real app, check for Auth Header and Admin Role
+    const { data, error } = await supabase.from('users').select('*, user_schedules(*)');
+    if (error) return res.status(500).json({ message: error.message });
+    res.json(data);
+});
+
+app.post('/api/admin/users', async (req: Request, res: Response) => {
+    const { username, password, role, schedules } = req.body;
+    
+    // Create User
+    const { data: user, error: uErr } = await supabase.from('users').insert({
+        username, password, role, is_active: true, allow_any_time: role === 'ADMIN'
+    }).select().single();
+
+    if (uErr) return res.status(500).json({ message: uErr.message });
+
+    // Create Schedules (0-6)
+    const scheduleRows = schedules.map((s: any) => ({
+        user_id: user.id,
+        day_of_week: s.day_of_week,
+        is_working: s.is_working,
+        start_time: s.start_time,
+        end_time: s.end_time
+    }));
+
+    await supabase.from('user_schedules').insert(scheduleRows);
+    res.json(user);
+});
+
+app.patch('/api/admin/users/:id', async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { is_active, allow_any_time, password, role, schedules } = req.body;
+
+    const { error: uErr } = await supabase.from('users').update({
+        is_active, allow_any_time, password, role
+    }).eq('id', id);
+
+    if (uErr) return res.status(500).json({ message: uErr.message });
+
+    if (schedules) {
+        for (const s of schedules) {
+            await supabase.from('user_schedules').update({
+                is_working: s.is_working,
+                start_time: s.start_time,
+                end_time: s.end_time
+            }).eq('user_id', id).eq('day_of_week', s.day_of_week);
+        }
+    }
+
+    res.json({ ok: true });
+});
+
+// -------- ADMIN: REPORTS (CORTE DE CAJA) --------
+app.get('/api/admin/reports/revenue', async (req: Request, res: Response) => {
+    const { from, to } = req.query;
+
+    // Get all tickets in period
+    let q = supabase.from('tickets').select('total_cost, created_by_user, users(username)');
+    if (from) q = q.gte('created_at', from);
+    if (to) q = q.lte('created_at', to);
+
+    const { data, error } = await q;
+    if (error) return res.status(500).json({ message: error.message });
+
+    // Group by user
+    const totals: Record<string, any> = {};
+    data.forEach((t: any) => {
+        const username = t.users?.username || 'Sistema/Manual';
+        if (!totals[username]) totals[username] = 0;
+        totals[username] += Number(t.total_cost);
+    });
+
+    res.json(totals);
 });
 
 app.listen(port, () => {
