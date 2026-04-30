@@ -236,6 +236,57 @@ app.get('/api/tickets/:folio', async (req: Request, res: Response) => {
   res.json(data);
 });
 
+// GET /api/rooms/:id/ticket
+app.get('/api/rooms/:id/ticket', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { data: session, error: sErr } = await supabase
+    .from('active_sessions')
+    .select('folio')
+    .eq('room_id', id)
+    .single();
+
+  if (sErr || !session) return res.json(null);
+
+  const { data: ticket, error: tErr } = await supabase
+    .from('tickets')
+    .select('*')
+    .eq('folio', session.folio)
+    .single();
+
+  if (tErr || !ticket) return res.json(null);
+  res.json(ticket);
+});
+
+// POST /api/rooms/:id/reprint
+app.post('/api/rooms/:id/reprint', async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const { data: room, error: roomErr } = await supabase
+    .from('rooms')
+    .select('id, number')
+    .eq('id', id)
+    .single();
+  if (roomErr || !room) return res.status(404).json({ message: 'Habitación no encontrada' });
+
+  const { data: session, error: sErr } = await supabase
+    .from('active_sessions')
+    .select('folio')
+    .eq('room_id', id)
+    .single();
+  if (sErr || !session) return res.status(400).json({ message: 'No hay ticket activo para esta habitación.' });
+
+  await supabase.from('room_logs').insert({
+    room_id: id,
+    room_number: room.number,
+    type: 'TICKET_REPRINTED',
+    folio: session.folio,
+    at: new Date().toISOString(),
+    created_by_user: req.body.userId
+  });
+
+  res.json({ ok: true });
+});
+
 // POST /api/rooms/:id/extend { minutesToAdd }
 app.post('/api/rooms/:id/extend', async (req: Request, res: Response) => {
     const { id } = req.params;
