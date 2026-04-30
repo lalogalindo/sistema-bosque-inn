@@ -28,12 +28,13 @@ export default function RoomsGrid() {
       setError(null);
 
       const data = await getRooms();
-      setRooms(data);
+      const sortedRooms = [...data].sort((a, b) => a.number - b.number);
+      setRooms(sortedRooms);
 
       // Si el modal está abierto y recargamos, sincroniza el "selected" con data fresca
       setSelected((prev) => {
         if (!prev) return null;
-        return data.find((r) => r.id === prev.id) ?? null;
+        return sortedRooms.find((r) => r.id === prev.id) ?? null;
       });
     } catch (e: any) {
       setError(e?.message ?? 'Error cargando habitaciones');
